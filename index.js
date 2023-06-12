@@ -31,6 +31,7 @@ async function run() {
         const userCollection = client.db('athleteAcademy').collection('users')
         const classCollection = client.db('athleteAcademy').collection('classes')
         const instructorCollection = client.db('athleteAcademy').collection('instructors')
+        const cartCollection = client.db('athleteAcademy').collection('carts')
         // getting user from client
         app.post('/users', async (req, res) => {
             const newUser = req.body
@@ -46,6 +47,18 @@ async function run() {
         // instructor
         app.get('/instructors', async (req, res) => {
             const result = await instructorCollection.find().toArray()
+            res.send(result)
+        })
+        // handling cart related api's
+        app.get('/carts', async (req, res) => {
+            const email = req.query.email
+            const query = { email: email }
+            const result = await cartCollection.find(query).toArray()
+            res.send(result)
+        })
+        app.post('/carts', async (req, res) => {
+            const item = req.body
+            const result = await cartCollection.insertOne(item)
             res.send(result)
         })
         // Send a ping to confirm a successful connection
