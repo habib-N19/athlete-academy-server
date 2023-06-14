@@ -10,20 +10,20 @@ app.use(express.json())
 app.use(cors())
 
 // jwt
-const verifyJWT = (req, res, next) => {
-    const authorization = req.headers.authorization
-    if (!authorization) {
-        return res.status(401).send({ error: true, message: 'Unauthorized Access' })
-    }
-    const token = authorization.split(' ')[1]
-    jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
-        if (error) {
-            return res.status(401).send({ error: true, message: 'Unauthorized Access!!' })
-        }
-        req.decoded = decoded
-        next()
-    })
-}
+// const verifyJWT = (req, res, next) => {
+//     const authorization = req.headers.authorization
+//     if (!authorization) {
+//         return res.status(401).send({ error: true, message: 'Unauthorized Access' })
+//     }
+//     const token = authorization.split(' ')[1]
+//     jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
+//         if (error) {
+//             return res.status(401).send({ error: true, message: 'Unauthorized Access!!' })
+//         }
+//         req.decoded = decoded
+//         next()
+//     })
+// }
 
 app.get('/', (req, res) => {
     res.send('server is running')
@@ -51,28 +51,45 @@ async function run() {
         const cartCollection = client.db('athleteAcademy').collection('carts')
         const pendingClassCollection = client.db('athleteAcademy').collection('pendingClasses')
         // getting jwt 
-        app.post('/jwt', (req, res) => {
-            const user = req.body
-            const token = jwt.sign(user, process.env.JWT_SECRET, {
-                expiresIn: '24hr'
-            })
-            res.send(token)
-        })
+        // app.post('/jwt', (req, res) => {
+        //     const user = req.body
+        //     const token = jwt.sign(user, process.env.JWT_SECRET, {
+        //         expiresIn: '24hr'
+        //     })
+        //     res.send(token)
+        // })
 
         // admin verify
-        const verifyAdmin = async (req, res, next) => {
-            const email = req.decoded.email
-            const query = { email: email }
-            const user = await userCollection.findOne(query)
-            if (user?.role !== 'admin') {
-                return res.status(403).send({ error: true, message: 'forbidden message' });
-            }
-            next()
-        }
+        // const verifyAdmin = async (req, res, next) => {
+        //     const email = req.decoded.email
+        //     const query = { email: email }
+        //     const user = await userCollection.findOne(query)
+        //     if (user?.role !== 'admin') {
+        //         return res.status(403).send({ error: true, message: 'forbidden message' });
+        //     }
+        //     next()
+        // }
         // getting user from client
         app.get('/users', async (req, res) => {
-            const result = await userCollection.find().toArray()
-            res.send(result)
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        });
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+
+            // if (req.decoded.email !== email) {
+            //     res.send({ admin: false })
+            // }
+
+            const query = { email: email }
+            const user = await userCollection.findOne(query);
+            // const result = { admin: user?.role === 'admin' }
+            if (user && user.role === 'admin') {
+                res.send({ admin: true });
+            } else {
+                res.send({ admin: false });
+            }
+            // res.send(result);
         })
         app.post('/users', async (req, res) => {
             const newUser = req.body
@@ -84,17 +101,33 @@ async function run() {
             const result = await classCollection.find().toArray()
             res.send(result)
         })
+        app.post('/classes', async (req, res) => {
+            const newClass = req.body
+            const result = await classCollection.insertOne(newClass)
+            res.send(result)
+        })
         // admin
-        app.post('/pending', async (req, res) => {
+        app.post('/addNew', async (req, res) => {
             const classPending = req.body
             console.log(classPending);
             const result = await pendingClassCollection.insertOne(classPending)
             res.send(result)
         })
+        // change pending class db
+        app.patch('/pending/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    status: 'approved'
+                }
+            }
+            const result = await pendingClassCollection.updateOne(filter, updateDoc)
+        })
         app.get('/pending', async (req, res) => {
 
-            const query = { status: 'pending' }
-            const result = await pendingClassCollection.find(query).toArray()
+            // const query = { status: 'pending' }
+            const result = await pendingClassCollection.find().toArray()
             res.send(result)
         })
         app.patch('/users/admin/:id', async (req, res) => {
