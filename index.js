@@ -1,12 +1,29 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000
 require('dotenv').config()
 
 // middleware
 app.use(express.json())
 app.use(cors())
+
+// jwt
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization
+    if (!authorization) {
+        return res.status(401).send({ error: true, message: 'Unauthorized Access' })
+    }
+    const token = authorization.split(' ')[1]
+    jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
+        if (error) {
+            return res.status(401).send({ error: true, message: 'Unauthorized Access!!' })
+        }
+        req.decoded = decoded
+        next()
+    })
+}
 
 app.get('/', (req, res) => {
     res.send('server is running')
@@ -32,6 +49,26 @@ async function run() {
         const classCollection = client.db('athleteAcademy').collection('classes')
         const instructorCollection = client.db('athleteAcademy').collection('instructors')
         const cartCollection = client.db('athleteAcademy').collection('carts')
+        const pendingClassCollection = client.db('athleteAcademy').collection('pendingClasses')
+        // getting jwt 
+        app.post('/jwt', (req, res) => {
+            const user = req.body
+            const token = jwt.sign(user, process.env.JWT_SECRET, {
+                expiresIn: '24hr'
+            })
+            res.send(token)
+        })
+
+        // admin verify
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email
+            const query = { email: email }
+            const user = await userCollection.findOne(query)
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ error: true, message: 'forbidden message' });
+            }
+            next()
+        }
         // getting user from client
         app.get('/users', async (req, res) => {
             const result = await userCollection.find().toArray()
@@ -48,6 +85,18 @@ async function run() {
             res.send(result)
         })
         // admin
+        app.post('/pending', async (req, res) => {
+            const classPending = req.body
+            console.log(classPending);
+            const result = await pendingClassCollection.insertOne(classPending)
+            res.send(result)
+        })
+        app.get('/pending', async (req, res) => {
+
+            const query = { status: 'pending' }
+            const result = await pendingClassCollection.find(query).toArray()
+            res.send(result)
+        })
         app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
