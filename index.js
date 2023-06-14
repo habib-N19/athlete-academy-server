@@ -7,7 +7,12 @@ require('dotenv').config()
 
 // middleware
 app.use(express.json())
-app.use(cors())
+const corsConfig = {
+    origin: '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+}
+app.use(cors(corsConfig))
 
 // jwt
 // const verifyJWT = (req, res, next) => {
@@ -44,7 +49,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        client.connect();
         const userCollection = client.db('athleteAcademy').collection('users')
         const classCollection = client.db('athleteAcademy').collection('classes')
         const instructorCollection = client.db('athleteAcademy').collection('instructors')
