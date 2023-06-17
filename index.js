@@ -112,7 +112,7 @@ async function run() {
             const newClass = req.body
             console.log(newClass);
             const result = await classCollection.insertOne(newClass)
-            res.send(result)
+            // res.send(result)
         })
         // admin
         // app.post('/classes/addNew', async (req, res) => {
