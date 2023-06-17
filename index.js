@@ -52,7 +52,7 @@ async function run() {
         client.connect();
         const userCollection = client.db('athleteAcademy').collection('users')
         const classCollection = client.db('athleteAcademy').collection('classes')
-        const instructorCollection = client.db('athleteAcademy').collection('instructors')
+        // const instructorCollection = client.db('athleteAcademy').collection('instructors')
         const cartCollection = client.db('athleteAcademy').collection('carts')
         // const pendingClassCollection = client.db('athleteAcademy').collection('pendingClasses')
         // getting jwt 
@@ -103,23 +103,26 @@ async function run() {
             res.send(result)
         })
         app.get('/classes', async (req, res) => {
-            const result = await classCollection.find().toArray()
+            const query = { status: 'approved' }
+            const result = await classCollection.find(query).toArray()
             res.send(result)
         })
+        // pending class
         app.post('/classes', async (req, res) => {
             const newClass = req.body
+            console.log(newClass);
             const result = await classCollection.insertOne(newClass)
             res.send(result)
         })
         // admin
-        app.post('/addNew', async (req, res) => {
-            const newClass = req.body
-            console.log(classPending);
-            const result = await classCollection.insertOne(classPending)
-            res.send(result)
-        })
+        // app.post('/classes/addNew', async (req, res) => {
+        //     const newClass = req.body
+        //     // console.log(classPending);
+        //     const result = await classCollection.insertOne(newClass)
+        //     res.send(result)
+        // })
         // change pending class db
-        app.patch('/patch/:id', async (req, res) => {
+        app.patch('/classes/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
             const updateDoc = {
@@ -128,6 +131,7 @@ async function run() {
                 }
             }
             const result = await classCollection.updateOne(filter, updateDoc)
+            res.send(result)
         })
         // app.get('/pending', async (req, res) => {
 
@@ -147,12 +151,25 @@ async function run() {
             res.send(result);
         })
 
-        // instructor
-        // app.get('/instructors', async (req, res) => {
-        //     const result = await instructorCollection.find().toArray()
-        //     res.send(result)
-        // })
-        // sending an instructor based info
+        // instructors
+        app.get('/users/instructors', async (req, res) => {
+            const query = { role: 'instructor' }
+            const result = await userCollection.find(query).toArray()
+            res.send(result)
+        })
+        // sending instructor's classes 
+        app.get('/instructors/classes/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query);
+            if (user && user.role === 'instructor') {
+                const query = { instructorEmail: email }
+                // console.log(email);
+                const result = await classCollection.find(query).toArray()
+                res.send(result);
+            }
+        })
+        // checking an instructor 
         app.get('/users/instructor/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
