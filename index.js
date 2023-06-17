@@ -10,7 +10,7 @@ app.use(express.json())
 const corsConfig = {
     origin: '*',
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
+    methods: ['GET', 'POST', 'PATCH', 'DELETE']
 }
 app.use(cors(corsConfig))
 
@@ -148,9 +148,21 @@ async function run() {
         })
 
         // instructor
-        app.get('/instructors', async (req, res) => {
-            const result = await instructorCollection.find().toArray()
-            res.send(result)
+        // app.get('/instructors', async (req, res) => {
+        //     const result = await instructorCollection.find().toArray()
+        //     res.send(result)
+        // })
+        // sending an instructor based info
+        app.get('/users/instructor/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query);
+            if (user && user.role === 'instructor') {
+                res.send({ instructor: true });
+            } else {
+                res.send({ instructor: false });
+            }
+
         })
         // make instructor
         app.patch('/users/instructor/:id', async (req, res) => {
