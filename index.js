@@ -10,7 +10,7 @@ app.use(express.json())
 const corsConfig = {
     origin: '*',
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE']
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
 }
 app.use(cors(corsConfig))
 
@@ -54,7 +54,7 @@ async function run() {
         const classCollection = client.db('athleteAcademy').collection('classes')
         const instructorCollection = client.db('athleteAcademy').collection('instructors')
         const cartCollection = client.db('athleteAcademy').collection('carts')
-        const pendingClassCollection = client.db('athleteAcademy').collection('pendingClasses')
+        // const pendingClassCollection = client.db('athleteAcademy').collection('pendingClasses')
         // getting jwt 
         // app.post('/jwt', (req, res) => {
         //     const user = req.body
@@ -113,13 +113,13 @@ async function run() {
         })
         // admin
         app.post('/addNew', async (req, res) => {
-            const classPending = req.body
+            const newClass = req.body
             console.log(classPending);
-            const result = await pendingClassCollection.insertOne(classPending)
+            const result = await classCollection.insertOne(classPending)
             res.send(result)
         })
         // change pending class db
-        app.patch('/pending/:id', async (req, res) => {
+        app.patch('/patch/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
             const updateDoc = {
@@ -127,14 +127,14 @@ async function run() {
                     status: 'approved'
                 }
             }
-            const result = await pendingClassCollection.updateOne(filter, updateDoc)
+            const result = await classCollection.updateOne(filter, updateDoc)
         })
-        app.get('/pending', async (req, res) => {
+        // app.get('/pending', async (req, res) => {
 
-            // const query = { status: 'pending' }
-            const result = await pendingClassCollection.find().toArray()
-            res.send(result)
-        })
+        //     // const query = { status: 'pending' }
+        //     const result = await pendingClassCollection.find().toArray()
+        //     res.send(result)
+        // })
         app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
