@@ -108,6 +108,17 @@ async function run() {
             const result = await classCollection.find(query).toArray()
             res.send(result)
         })
+        // top class 
+        app.get('/classes/top', async (req, res) => {
+            const query = { status: 'approved' }
+            const options = {
+                limit: 6, sort: {
+                    enrolled: -1
+                }
+            }
+            const result = await classCollection.find(query, options).toArray()
+            res.send(result)
+        })
         // sending all class to admin
         app.get('/classes/all', async (req, res) => {
             const result = await classCollection.find().toArray()
@@ -121,12 +132,7 @@ async function run() {
             res.send(result)
         })
         // admin
-        // app.post('/classes/addNew', async (req, res) => {
-        //     const newClass = req.body
-        //     // console.log(classPending);
-        //     const result = await classCollection.insertOne(newClass)
-        //     res.send(result)
-        // })
+
         // change pending class db
         app.patch('/classes/:id', async (req, res) => {
             const id = req.params.id
