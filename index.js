@@ -102,9 +102,15 @@ async function run() {
             const result = await userCollection.insertOne(newUser)
             res.send(result)
         })
+        // sending data to show only approved classes
         app.get('/classes', async (req, res) => {
             const query = { status: 'approved' }
             const result = await classCollection.find(query).toArray()
+            res.send(result)
+        })
+        // sending all class to admin
+        app.get('/classes/all', async (req, res) => {
+            const result = await classCollection.find().toArray()
             res.send(result)
         })
         // pending class
@@ -112,7 +118,7 @@ async function run() {
             const newClass = req.body
             console.log(newClass);
             const result = await classCollection.insertOne(newClass)
-            // res.send(result)
+            res.send(result)
         })
         // admin
         // app.post('/classes/addNew', async (req, res) => {
@@ -133,12 +139,7 @@ async function run() {
             const result = await classCollection.updateOne(filter, updateDoc)
             res.send(result)
         })
-        // app.get('/pending', async (req, res) => {
 
-        //     // const query = { status: 'pending' }
-        //     const result = await pendingClassCollection.find().toArray()
-        //     res.send(result)
-        // })
         app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
@@ -163,7 +164,7 @@ async function run() {
             const query = { email: email }
             const user = await userCollection.findOne(query);
             if (user && user.role === 'instructor') {
-                const query = { instructorEmail: email }
+                const query = { email: email }
                 // console.log(email);
                 const result = await classCollection.find(query).toArray()
                 res.send(result);
